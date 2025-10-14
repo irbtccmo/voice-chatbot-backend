@@ -1,0 +1,9 @@
+# Google Cloud credentials
+gcp_key.json
+
+# Python temporary files
+__pycache__/
+
+# Audio files
+*.mp3
+*.wav
