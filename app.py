@@ -9,14 +9,8 @@ from google.cloud import texttospeech
 import google.generativeai as genai
 
 # --- تنظیمات اولیه ---
-# لاگین برای دیدن خطاها در سرور
 logging.basicConfig(level=logging.INFO)
-
-# مسیر فایل کلید JSON گوگل کلاد
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'gcp_key.json'
-
-# کلید API مدل Gemini
-# کد جدید و امن
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 # --- راه‌اندازی کلاینت‌های گوگل ---
@@ -30,13 +24,13 @@ except Exception as e:
     logging.error(f"خطا در راه‌اندازی کلاینت‌های گوگل: {e}")
     exit()
 
-# --- توابع پردازشی (کپی شده از اسکریپت قبلی) ---
+# --- توابع پردازشی ---
 def speech_to_text_google(audio_content):
     logging.info("در حال تبدیل گفتار به متن...")
     audio = speech.RecognitionAudio(content=audio_content)
     config = speech.RecognitionConfig(
-        encoding=speech.RecognitionConfig.AudioEncoding.WEBM_OPUS, # فرمت رایج در وب
-        sample_rate_hertz=48000, # نرخ نمونه‌برداری استاندارد در وب
+        encoding=speech.RecognitionConfig.AudioEncoding.WEBM_OPUS,
+        sample_rate_hertz=48000,
         language_code="fa-IR"
     )
     response = speech_client.recognize(config=config, audio=audio)
@@ -67,58 +61,43 @@ def text_to_speech_google(text_to_speak):
 
 # --- راه‌اندازی سرور Flask ---
 app = Flask(__name__)
-CORS(app) # فعال‌سازی CORS برای اجازه دسترسی از دامنه‌های دیگر
+CORS(app)
+
 # مسیر تست برای اطمینان از بالا بودن سرور
 @app.route('/')
 def index():
     return "سلام! سرور چت‌بات صوتی فعال است."
 
-# ... بقیه کد شما از اینجا شروع می‌شود
-@app.route('/process-audio', methods=['POST'])
-# ...
+# --- تابع اصلی برای پردازش صوت (نسخه تستی) ---
 @app.route('/process-audio', methods=['POST'])
 def process_audio_endpoint():
-    logging.info("درخواست جدید دریافت شد.")
+    logging.info("درخواست جدید در حالت تست دریافت شد.")
     
-    # دریافت فایل صوتی از درخواست وب
     audio_file = request.files.get('audio')
     if not audio_file:
+        logging.error("فایل صوتی در درخواست یافت نشد.")
         return "فایل صوتی یافت نشد", 400
     
     audio_content = audio_file.read()
-    # کد فعلی شما
-def process_audio_endpoint():
-    # ... (کدهای دیگر)
-    audio_content = audio_file.read()
-
-    # خط جدید برای عیب‌یابی: حجم فایل دریافتی را چاپ می‌کند
-    logging.info(f"Received audio file of size: {len(audio_content)} bytes")
-
-    # ... (بقیه کد ادامه می‌یابد)
-    user_text = speech_to_text_google(audio_content)
-    # ...
-    # مرحله ۱: تبدیل گفتار به متن
-    user_text = speech_to_text_google(audio_content)
-    if not user_text:
-        logging.warning("متنی از صدا استخراج نشد.")
-        return "متنی از صدا استخراج نشد", 400
-    logging.info(f"متن شناسایی شده: {user_text}")
-
-    # مرحله ۲: دریافت پاسخ از Gemini
-    ai_text_response = get_gemini_response(user_text)
-    logging.info(f"پاسخ Gemini: {ai_text_response}")
-
-    # مرحله ۳: تبدیل پاسخ متنی به گفتار
-    ai_audio_response = text_to_speech_google(ai_text_response)
+    logging.info(f"فایل صوتی با حجم {len(audio_content)} بایت دریافت شد. (حالت تست)")
     
-    # ذخیره موقت فایل صوتی برای ارسال
-    output_audio_path = "response.mp3"
-    with open(output_audio_path, "wb") as f:
-        f.write(ai_audio_response)
+    # ما بخش‌های تبدیل گفتار به متن و جمینای را برای تست رد می‌کنیم
+    logging.info("نادیده گرفتن STT و Gemini برای تست.")
+    ai_text_response = "این یک پاسخ تستی است تا از عملکرد سرور مطمئن شویم."
+
+    try:
+        logging.info(f"پاسخ تستی: {ai_text_response}")
+        ai_audio_response = text_to_speech_google(ai_text_response)
         
-    logging.info("پاسخ صوتی آماده ارسال است.")
-    # ارسال فایل صوتی به عنوان پاسخ
-    return send_file(output_audio_path, mimetype="audio/mpeg")
+        output_audio_path = "response.mp3"
+        with open(output_audio_path, "wb") as f:
+            f.write(ai_audio_response)
+            
+        logging.info("پاسخ صوتی تستی آماده ارسال است.")
+        return send_file(output_audio_path, mimetype="audio/mpeg")
+    except Exception as e:
+        logging.error(f"خطا در بخش TTS یا ارسال فایل: {e}")
+        return "خطا در ساخت فایل صوتی", 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
