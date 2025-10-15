@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.INFO)
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'gcp_key.json'
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
-# --- راه‌اندازی کلاینت‌های گوگل ---
+# ---  راه‌اندازی کلاینت‌های گوگل ---
 try:
     speech_client = speech.SpeechClient()
     tts_client = texttospeech.TextToSpeechClient()
