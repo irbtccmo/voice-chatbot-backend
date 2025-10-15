@@ -44,11 +44,13 @@ def get_gemini_response(user_text):
     response = gemini_model.generate_content(prompt)
     return response.text
 
+# --- تابع اصلاح شده و نهایی برای تبدیل متن به گفتار ---
 def text_to_speech_google(text_to_speak):
     logging.info("در حال تبدیل متن به گفتار...")
     synthesis_input = texttospeech.SynthesisInput(text=text_to_speak)
     voice = texttospeech.VoiceSelectionParams(
         language_code="fa-IR",
+        name="fa-IR-Wavenet-A",  # <--- اصلاحیه اصلی اینجاست
         ssml_gender=texttospeech.SsmlVoiceGender.FEMALE
     )
     audio_config = texttospeech.AudioConfig(
@@ -63,41 +65,48 @@ def text_to_speech_google(text_to_speak):
 app = Flask(__name__)
 CORS(app)
 
-# مسیر تست برای اطمینان از بالا بودن سرور
 @app.route('/')
 def index():
     return "سلام! سرور چت‌بات صوتی فعال است."
 
-# --- تابع اصلی برای پردازش صوت (نسخه تستی) ---
+# --- تابع اصلی برای پردازش صوت (نسخه نهایی و واقعی) ---
 @app.route('/process-audio', methods=['POST'])
 def process_audio_endpoint():
-    logging.info("درخواست جدید در حالت تست دریافت شد.")
+    logging.info("درخواست جدید دریافت شد.")
     
     audio_file = request.files.get('audio')
     if not audio_file:
-        logging.error("فایل صوتی در درخواست یافت نشد.")
+        logging.error("فایل صوتی یافت نشد")
         return "فایل صوتی یافت نشد", 400
     
     audio_content = audio_file.read()
-    logging.info(f"فایل صوتی با حجم {len(audio_content)} بایت دریافت شد. (حالت تست)")
+    logging.info(f"فایل صوتی با حجم {len(audio_content)} بایت دریافت شد.")
     
-    # ما بخش‌های تبدیل گفتار به متن و جمینای را برای تست رد می‌کنیم
-    logging.info("نادیده گرفتن STT و Gemini برای تست.")
-    ai_text_response = "این یک پاسخ تستی است تا از عملکرد سرور مطمئن شویم."
+    if len(audio_content) == 0:
+        logging.warning("فایل صوتی خالی است.")
+        return "فایل صوتی خالی است", 400
 
     try:
-        logging.info(f"پاسخ تستی: {ai_text_response}")
+        user_text = speech_to_text_google(audio_content)
+        if not user_text:
+            logging.warning("متنی از صدا استخراج نشد.")
+            ai_text_response = "متاسفم، صحبت شما را متوجه نشدم. ممکن است دوباره تکرار کنید؟"
+        else:
+            logging.info(f"متن شناسایی شده: {user_text}")
+            ai_text_response = get_gemini_response(user_text)
+        
+        logging.info(f"پاسخ Gemini: {ai_text_response}")
         ai_audio_response = text_to_speech_google(ai_text_response)
         
         output_audio_path = "response.mp3"
         with open(output_audio_path, "wb") as f:
             f.write(ai_audio_response)
             
-        logging.info("پاسخ صوتی تستی آماده ارسال است.")
+        logging.info("پاسخ صوتی آماده ارسال است.")
         return send_file(output_audio_path, mimetype="audio/mpeg")
     except Exception as e:
-        logging.error(f"خطا در بخش TTS یا ارسال فایل: {e}")
-        return "خطا در ساخت فایل صوتی", 500
+        logging.error(f"خطای داخلی سرور: {e}", exc_info=True)
+        return "خطای داخلی در سرور رخ داد", 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
