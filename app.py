@@ -14,16 +14,16 @@ os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'gcp_key.json'
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 # ---  راه‌اندازی کلاینت‌های گوگل ---
+# کد صحیح - این بلوک را جایگزین کنید
 try:
     speech_client = speech.SpeechClient()
     tts_client = texttospeech.TextToSpeechClient()
     genai.configure(api_key=GEMINI_API_KEY)
-    # کد اصلاح شده و نهایی
-    gemini_model = genai.GenerativeModel('gemini-pro')    logging.info("کلاینت‌های گوگل با موفقیت راه‌اندازی شدند.")
+    gemini_model = genai.GenerativeModel('gemini-pro')
+    logging.info("کلاینت‌های گوگل با موفقیت راه‌اندازی شدند.")
 except Exception as e:
     logging.error(f"خطا در راه‌اندازی کلاینت‌های گوگل: {e}")
     exit()
-
 # --- توابع پردازشی ---
 def speech_to_text_google(audio_content):
     logging.info("در حال تبدیل گفتار به متن...")
