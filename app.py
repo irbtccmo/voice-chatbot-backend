@@ -18,8 +18,8 @@ try:
     speech_client = speech.SpeechClient()
     tts_client = texttospeech.TextToSpeechClient()
     genai.configure(api_key=GEMINI_API_KEY)
-    gemini_model = genai.GenerativeModel('gemini-1.5-flash-latest')
-    logging.info("کلاینت‌های گوگل با موفقیت راه‌اندازی شدند.")
+    # کد اصلاح شده و نهایی
+    gemini_model = genai.GenerativeModel('gemini-pro')    logging.info("کلاینت‌های گوگل با موفقیت راه‌اندازی شدند.")
 except Exception as e:
     logging.error(f"خطا در راه‌اندازی کلاینت‌های گوگل: {e}")
     exit()
