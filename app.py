@@ -86,7 +86,17 @@ def process_audio_endpoint():
         return "فایل صوتی یافت نشد", 400
     
     audio_content = audio_file.read()
-    
+    # کد فعلی شما
+def process_audio_endpoint():
+    # ... (کدهای دیگر)
+    audio_content = audio_file.read()
+
+    # خط جدید برای عیب‌یابی: حجم فایل دریافتی را چاپ می‌کند
+    logging.info(f"Received audio file of size: {len(audio_content)} bytes")
+
+    # ... (بقیه کد ادامه می‌یابد)
+    user_text = speech_to_text_google(audio_content)
+    # ...
     # مرحله ۱: تبدیل گفتار به متن
     user_text = speech_to_text_google(audio_content)
     if not user_text:
